@@ -1,11 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, send_from_directory
 from reportlab.pdfgen import canvas
+import io
 import os
 
 app = Flask(__name__)
-
-if not os.path.exists("static"):
-    os.makedirs("static")
 
 @app.route('/')
 def home():
@@ -19,9 +17,9 @@ def generate_pdf():
     description_colis = request.args.get('description', 'Pas de description')
     destinataire = request.args.get('receiver', 'Destinataire inconnu')
 
-    filename = f"bon_livraison_{nom_client}.pdf".replace(" ", "_")
-    filepath = f"static/{filename}"
-
+    # Génération du PDF
+    filename = 'bon_livraison.pdf'
+    filepath = os.path.join('static', filename)
     c = canvas.Canvas(filepath)
     c.drawString(100, 800, "Bon de Livraison - Dakar Speed Pro")
     c.drawString(100, 770, f"Client : {nom_client}")
@@ -31,10 +29,9 @@ def generate_pdf():
     c.drawString(100, 650, f"Nom / Téléphone destinataire : {destinataire}")
     c.save()
 
-    url_pdf = request.url_root + f"static/{filename}"
-
-    return jsonify({"pdf_link": url_pdf})
+    # Retourne une URL publique vers le PDF
+    pdf_url = request.host_url + 'static/' + filename
+    return {'pdf_url': pdf_url}
 
 if __name__ == '__main__':
-    from waitress import serve
-    serve(app, host='0.0.0.0', port=10000)
+    app.run(host='0.0.0.0', port=10000)
